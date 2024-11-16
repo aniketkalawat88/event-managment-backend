@@ -1,0 +1,68 @@
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+const Event = require("../models/Event");
+
+const registerPost = async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    const userExist = await User.findOne({ email });
+    if (userExist) {
+      return res.status(400).json({ message: "User Already Exist" });
+    }
+    const userCreated = new User({
+      name,
+      email,
+      password,
+    });
+    await userCreated.save();
+    res.status(201).json({ message: "User registered", value: userCreated });
+  } catch (error) {
+    res.status(400).json({ message: "Error Register ", error: error.message });
+  }
+};
+
+const loginPost = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await User.findOne({ email });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    const token = jwt.sign(
+        { id: user._id },
+        process.env.JWT_SECRET,
+        {
+        expiresIn: "1h",
+        }
+    );
+        res.json({ message: "Login Succesfull", value: user, Token: token });
+  } catch (error) {
+    res.status(400).json({ message: "Error Login", error: error.message });
+  }
+};
+
+const rsvpPost = async (req, res) => {
+  try {
+    const event = await Event.findById(req.params._id);
+    console.log(req.params._id);
+
+    if (!event) return res.status(404).json({ message: "Event not found" });
+    console.log(req.user.id)
+    if (event.attendees.includes(req.user.id)) {
+      return res
+        .status(400)
+        .json({ message: "You have already RSVP to this event" });
+    }
+
+    const data = event.attendees.push(req.user.id);
+    await event.save();
+    res.status(200).json({ message: "RSVP successful", value: data });
+  } catch (error) {
+    res
+      .status(400)
+      .json({ message: "Error RSVP Request", error: error.message });
+  }
+};
+
+module.exports = { registerPost, loginPost, rsvpPost };
