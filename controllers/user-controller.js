@@ -33,7 +33,7 @@ const loginPost = async (req, res) => {
         { id: user._id },
         process.env.JWT_SECRET,
         {
-        expiresIn: "1h",
+        expiresIn: "30d",
         }
     );
         res.json({ message: "Login Succesfull", value: user, Token: token });
@@ -52,17 +52,30 @@ const rsvpPost = async (req, res) => {
     if (event.attendees.includes(req.user.id)) {
       return res
         .status(400)
-        .json({ message: "You have already RSVP to this event" });
+        .json({ message: "You Booking is alrady confirm" });
     }
 
     const data = event.attendees.push(req.user.id);
     await event.save();
-    res.status(200).json({ message: "RSVP successful", value: data });
+    res.status(200).json({ message: "Event Booking successful (RSVP)", value: data });
   } catch (error) {
     res
       .status(400)
-      .json({ message: "Error RSVP Request", error: error.message });
+      .json({ message: "Error Booking ( RSVP Request) ", error: error.message });
   }
 };
 
-module.exports = { registerPost, loginPost, rsvpPost };
+const roleCheck = async (req ,res) => {
+  try {
+    const { role } = req.user;
+    if (!role) {
+        return res.status(400).json({ message: "User not found." });
+    }
+    return res.status(200).json({role: role });
+    
+  } catch (error) {
+    res.status(400).json({ message: "Error role check", error: error.message });
+  }
+}
+
+module.exports = { registerPost, loginPost, rsvpPost , roleCheck};
