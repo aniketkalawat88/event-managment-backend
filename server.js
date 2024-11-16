@@ -14,6 +14,10 @@ const userRoutes = require("./routes/userRoutes");
 app.use("/api/admin", adminRoutes);
 app.use("/api/users", userRoutes);
 
+app.use("*",(req, res)=> {
+  return res.status(400).json({message:"Page Not Found"})
+})
+
 const PORT = process.env.PORT;
 app.listen(PORT, () => {
   console.log(`Server is running on port number ${PORT}`);
