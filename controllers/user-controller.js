@@ -50,9 +50,7 @@ const rsvpPost = async (req, res) => {
     if (!event) return res.status(404).json({ message: "Event not found" });
     console.log(req.user.id)
     if (event.attendees.includes(req.user.id)) {
-      return res
-        .status(400)
-        .json({ message: "You Booking is alrady confirm" });
+      return res.status(400).json({ message: "You Booking is alrady confirm" });
     }
 
     const data = event.attendees.push(req.user.id);
@@ -69,7 +67,7 @@ const roleCheck = async (req ,res) => {
   try {
     const { role } = req.user;
     if (!role) {
-        return res.status(400).json({ message: "User not found." });
+        return res.status(404).json({ message: "User not found." });
     }
     return res.status(200).json({role: role });
     
@@ -78,4 +76,33 @@ const roleCheck = async (req ,res) => {
   }
 }
 
-module.exports = { registerPost, loginPost, rsvpPost , roleCheck};
+const rsvpList = async (req, res) => {
+  try {
+      const userId = req.user._id;
+      const rsvpEvents = await Event.find({ attendees: userId });
+
+      if (!rsvpEvents.length) {
+          return res.status(404).json({ message: "You are not participated any events" });
+      }
+      res.status(200).json({message:"All Events List", value:rsvpEvents });
+
+  } catch (error) {
+      res.status(400).json({ message: "Error User RSVP list", error: error });
+  }
+}
+
+const userProfile = async (req, res) => {
+  try {
+      const userId = req.user._id;
+      const userData = await User.findById(userId).select("-password"); 
+      if (!userData) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.status(200).json({message:"Succesfully get data", value: userData });
+  } catch (error) {
+    console.log(error)
+      res.status(500).json({ message: "Error profile data", error: error });
+  }
+}
+
+module.exports = { registerPost, loginPost, rsvpPost , roleCheck , rsvpList , userProfile};
